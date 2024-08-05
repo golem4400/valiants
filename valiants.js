@@ -21,6 +21,7 @@ class ValiantAPI {
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
+            'cookie': 'token='+ this.token,
             'Next-Action': '2a0717c329f249700fe8e3898400c305762181ee'
         };
     }
@@ -28,8 +29,7 @@ class ValiantAPI {
     async getData() {
         const url = 'https://mini.playvaliants.com/';
         const payload = [
-            "/user/data",
-            this.token
+            "/user/data"
         ];
 
         const rawData = await this.http(url, 'POST', payload);
@@ -54,7 +54,6 @@ class ValiantAPI {
         const url = 'https://mini.playvaliants.com/';
         const payload = [
             "/rewards/claim",
-            this.token,
             {}
         ];
 
@@ -96,7 +95,6 @@ class ValiantAPI {
         const url = 'https://mini.playvaliants.com/';
         const payload = [
             "/user/missions",
-            this.token
         ];
         const rawData = await this.http(url, 'POST', payload);
         if (rawData) {
@@ -137,7 +135,6 @@ class ValiantAPI {
         const url = 'https://mini.playvaliants.com/earn/';
         const payload = [
             "/perks/energy-level-up",
-            this.token,
             {}
         ];
 
@@ -161,7 +158,6 @@ class ValiantAPI {
         const url = 'https://mini.playvaliants.com/earn/';
         const payload = [
             "/perks/click-level-up",
-            this.token,
             {}
         ];
 
@@ -218,7 +214,6 @@ class ValiantAPI {
         const url = 'https://mini.playvaliants.com/';
         const payload = [
             "/gameplay/config",
-            this.token
         ];
         const rawData = await this.http(url, 'POST', payload);
         if (rawData) {
@@ -303,7 +298,7 @@ const main = async () => {
             console.log(`\n========== Tài khoản ${index + 1} ==========`.blue);
 
             if (rawData && rawData.data) {
-                let { energy, energy_cap, experience, experience_per_hour, daily_reward, energy_level, click_level } = rawData.data;
+                let { energy, energy_cap, experience, experience_per_hour, daily_reward, energy_level, click_level} = rawData.data;
 
                 api.log(`Balance: ${experience}`, 'info');
                 api.log(`Exp per Hour: ${experience_per_hour}/Hour`, 'info');
@@ -331,7 +326,6 @@ const main = async () => {
                         for (const id of Object.keys(configData.data.unlocks)) {
                             const payload = [
                                 "/unlock",
-                                token,
                                 { id: parseInt(id, 10) }
                             ];
                             const unlockData = await api.unlock(payload);
@@ -342,6 +336,21 @@ const main = async () => {
                             }
                             await new Promise(resolve => setTimeout(resolve, 3000));
                         }
+                    }
+                }
+
+                const layData = await api.getData();
+                let { combo } = layData.data;
+                if (combo.combo_completed && !combo.claimed) {
+                    const comboPayload = [
+                        "/combo/claim",
+                        {}
+                    ];
+                    const comboData = await api.taptap(comboPayload);
+                    if (comboData && comboData.data) {
+                        api.log(`Combo đã được hoàn thành..nhận 5M!`, 'warning');
+                    } else {
+                        api.log('Không thể nhận phần thưởng combo!', 'error');
                     }
                 }
 
@@ -391,7 +400,6 @@ const main = async () => {
                                 await new Promise(resolve => setTimeout(resolve, 2000));
                                 const payload = [
                                     "/missions/claim",
-                                    token,
                                     { id: mission.id }
                                 ];
                                 const claimData = await api.claimMission(payload);
@@ -408,7 +416,6 @@ const main = async () => {
                     const tap = Math.min(randomInt(50, 60), energy);
                     const payload = [
                         "/gameplay/click",
-                        token,
                         { count: tap }
                     ];
                     const tapData = await api.taptap(payload);
